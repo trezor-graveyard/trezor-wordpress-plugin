@@ -4,12 +4,12 @@ Plugin Name: TREZOR WordPress Plugin
 Plugin URI: http://buytrezor.com
 Description: WordPress plugin that allows login via TREZOR Connect.
 Version: 0.3
-Author: Jan Čejka
-Author URI: http://jancejka.cz
-Author Email: posta@jancejka.cz
+Author: SatoshiLabs
+Author URI: http://satoshilabs.com/
+Author Email: integration@satoshilabs.com
 License:
 
-  Copyright 2015 Jan Čejka (posta@jancejka.cz)
+  Copyright (c) 2015 Jan Čejka (posta@jancejka.cz)
 
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License, version 2, as
@@ -23,7 +23,6 @@ License:
   You should have received a copy of the GNU General Public License
   along with this program; if not, write to the Free Software
   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-
 */
 
 require "BitcoinECDSA.php";
@@ -136,7 +135,7 @@ class WPTrezorPlugin {
     function create_menu() {
 
         //create new top-level menu
-        add_menu_page('TREZOR Connect Settings', 'TREZOR Connect', 'administrator', 'trezor_settings', array(&$this, 'trezor_settings_page'),plugins_url('/images/logo_square-16px-light.png', __FILE__));
+        add_menu_page('TREZOR Connect Settings', 'TREZOR Connect', 'administrator', 'trezor_settings', array(&$this, 'trezor_settings_page'),plugins_url('/images/logo_square-menu.png', __FILE__));
 
         //call register settings function
         add_action('admin_init', array(&$this, 'register_settings'));
@@ -154,7 +153,6 @@ class WPTrezorPlugin {
     function load_wp_media_files() {
         wp_enqueue_media();
     }
-
 
     function trezor_settings_page() {
         $this->load_file(self::slug . '-trezor-settings-script', '/js/settings.js', true);
