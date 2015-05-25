@@ -1,0 +1,12 @@
+#trezor_connect_result {
+    font-style: italic;
+}
+
+#trezor_connect_result.success {
+    color: green;
+}
+
+#trezor_connect_result.fail {
+    color: red;
+}
+
