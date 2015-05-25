@@ -5,15 +5,15 @@
 var gk_media_init = function(selector, button_selector)  {
     var clicked_button = false;
 
-    jQuery(selector).each(function (i, input) {
+    jQuery(selector).each(function(i, input) {
         var button = jQuery(input).next(button_selector);
-        button.click(function (event) {
+        button.click(function(event) {
             event.preventDefault();
             var selected_img;
             clicked_button = jQuery(this);
 
             // check for media manager instance
-            if(wp.media.frames.gk_frame) {
+            if (wp.media.frames.gk_frame) {
                 wp.media.frames.gk_frame.open();
                 return;
             }
@@ -55,6 +55,6 @@ var gk_media_init = function(selector, button_selector)  {
     });
 };
 
-jQuery(document).ready( function() {
+jQuery(document).ready(function() {
     gk_media_init('.media-input', '.media-button');
 });

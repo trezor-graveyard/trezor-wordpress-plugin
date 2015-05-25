@@ -2,26 +2,26 @@
  * Created by Merlin on 9.5.2015.
  */
 
-function setMessage( messageClass, messageText ) {
-    var e = document.getElementById( 'trezor_connect_result' );
+function setMessage(messageClass, messageText) {
+    var e = document.getElementById('trezor_connect_result');
     e.className = messageClass;
     e.innerHTML = messageText;
 }
 
-function setFormItemValue( itemName, value ) {
-    var elements = document.getElementsByName( itemName );
+function setFormItemValue(itemName, value) {
+    var elements = document.getElementsByName(itemName);
     var e = elements[0];
     e.setAttribute('value', value);
 }
 
 function trezorConnect(response) {
     if (response.success) {
-        setFormItemValue( 'trezor_address', response.address );
-        setFormItemValue( 'trezor_publickey', response.public_key );
-        setFormItemValue( 'trezor_challenge_visual', response.challenge_visual );
-        setFormItemValue( 'trezor_challenge_hidden', response.challenge_hidden );
-        setFormItemValue( 'trezor_signature', response.signature );
-        setFormItemValue( 'trezor_connect_changed', 1 );
+        setFormItemValue('trezor_address', response.address);
+        setFormItemValue('trezor_publickey', response.public_key);
+        setFormItemValue('trezor_challenge_visual', response.challenge_visual);
+        setFormItemValue('trezor_challenge_hidden', response.challenge_hidden);
+        setFormItemValue('trezor_signature', response.signature);
+        setFormItemValue('trezor_connect_changed', 1);
         showLinkPasswordField();
     } else {
         alert('Wrong signature');
@@ -66,9 +66,9 @@ function trezorLink() {
         url: "?trezor_action=link",
         data: data,
         success: function(data) {
-            if( data['result'] == 'success' ) {
-                setFormItemValue( 'trezor_connected', 1 );
-                setFormItemValue( 'trezor_connect_changed', 1 );
+            if (data['result'] == 'success') {
+                setFormItemValue('trezor_connected', 1);
+                setFormItemValue('trezor_connect_changed', 1);
                 switchState();
             } else {
                 alert(data['message']);
@@ -88,9 +88,9 @@ function trezorUnlink() {
         url: "?trezor_action=unlink",
         data: data,
         success: function(data) {
-            if( data['result'] == 'success' ) {
-                setFormItemValue( 'trezor_connected', 0 );
-                setFormItemValue( 'trezor_connect_changed', 1 );
+            if (data['result'] == 'success') {
+                setFormItemValue('trezor_connected', 0);
+                setFormItemValue('trezor_connect_changed', 1);
                 switchState();
                 hideUnlinkPasswordField();
             } else {
@@ -101,8 +101,7 @@ function trezorUnlink() {
 }
 
 function switchState() {
-    //var state = document.getElementsByName( 'trezor_connected' );
-    switch( jQuery('#trezor_connected').val() ) {
+    switch (jQuery('#trezor_connected').val()) {
         case '1':
             jQuery('.trezor_linked').show();
             jQuery('.trezor_unlinked').hide();
@@ -114,7 +113,7 @@ function switchState() {
     }
 }
 
-jQuery(document).ready( function() {
+jQuery(document).ready(function() {
     //jQuery('#unlink_button').on("click", showUnlinkPasswordField());
     switchState();
 });
