@@ -30,23 +30,23 @@ require "BitcoinECDSA.php";
 
 use BitcoinPHP\BitcoinECDSA\BitcoinECDSA;
 
-class BTCTrezorLogin {
+class WPTrezorPlugin {
 
     /*--------------------------------------------*
      * Constants
      *--------------------------------------------*/
-    const name = 'BTC Trezor Login';
-    const slug = 'btc_trezor_login';
+    const name = 'Trezor Plugin';
+    const slug = 'wp_trezor_plugin';
 
     /**
      * Constructor
      */
     function __construct() {
         // register an activation hook for the plugin
-        register_activation_hook(__FILE__, array(&$this, 'install_btc_trezor_login'));
+        register_activation_hook(__FILE__, array(&$this, 'install_trezor_plugin'));
 
         // Hook up to the init action
-        add_action('init', array(&$this, 'init_btc_trezor_login'));
+        add_action('init', array(&$this, 'init_trezor_plugin'));
 
         // add link to login form
         add_action('login_footer', array(&$this, 'trezor_login_footer'));
@@ -61,14 +61,14 @@ class BTCTrezorLogin {
     /**
      * Runs when the plugin is activated
      */
-    function install_btc_trezor_login() {
+    function install_trezor_plugin() {
         // do not generate any output here
     }
 
     /**
      * Runs when the plugin is initialized
      */
-    function init_btc_trezor_login() {
+    function init_trezor_plugin() {
         ob_start();
         // Setup localization
         load_plugin_textdomain(self::slug, false, dirname(plugin_basename(__FILE__)) . '/lang');
@@ -394,6 +394,6 @@ class BTCTrezorLogin {
     }
 
 } // end class
-new BTCTrezorLogin();
+new WPTrezorPlugin();
 
 ?>
