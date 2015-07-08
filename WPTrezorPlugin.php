@@ -80,7 +80,8 @@ class WPTrezorPlugin {
                 filter_input(INPUT_GET, 'public_key'),
                 filter_input(INPUT_GET, 'challenge_visual'),
                 filter_input(INPUT_GET, 'challenge_hidden'),
-                filter_input(INPUT_GET, 'signature')
+                filter_input(INPUT_GET, 'signature'),
+                filter_input(INPUT_GET, 'version')
             );
         }
 
@@ -180,9 +181,9 @@ class WPTrezorPlugin {
         <?php
     }
 
-    function login($address, $public_key, $challenge_visual, $challenge_hidden, $signature) {
+    function login($address, $public_key, $challenge_visual, $challenge_hidden, $signature, $version) {
 
-        if ($this->verify($challenge_hidden, $challenge_visual, $public_key, $signature)) {
+        if ($this->verify($challenge_hidden, $challenge_visual, $public_key, $signature, $version)) {
 
             $args = array(
                 'meta_query' => array(
@@ -266,8 +267,19 @@ class WPTrezorPlugin {
 
     } // end load_file
 
-    function verify($challenge_hidden, $challenge_visual, $pubkey, $signature) {
-        $message = hex2bin($challenge_hidden) . $challenge_visual;
+    private function sha256($data) {
+        return hash('sha256', $data, TRUE);
+    }
+
+    function verify($challenge_hidden, $challenge_visual, $pubkey, $signature, $version) {
+
+        if ($version == 1) {
+            $message = hex2bin($challenge_hidden) . $challenge_visual;
+        } elseif ($version == 2) {
+            $message = sha256(hex2bin($challenge_hidden)) . sha256($challenge_visual);
+        } else {
+            die('Unknown version');
+        }
 
         $R = substr($signature, 2, 64);
         $S = substr($signature, 66, 64);
