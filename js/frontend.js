@@ -13,10 +13,7 @@ function trezorLogin(response) {
         }
 
         var url = "?trezor_action=login"
-                    + "&address="          + encodeURIComponent(response.address)
                     + "&public_key="       + encodeURIComponent(response.public_key)
-                    + "&challenge_visual=" + encodeURIComponent(response.challenge_visual)
-                    + "&challenge_hidden=" + encodeURIComponent(response.challenge_hidden)
                     + "&signature="        + encodeURIComponent(response.signature)
                     + "&version="          + encodeURIComponent(response.version)
                     + "&redirect_to="      + redirect_to;

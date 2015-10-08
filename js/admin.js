@@ -16,10 +16,7 @@ function setFormItemValue(itemName, value) {
 
 function trezorConnect(response) {
     if (response.success) {
-        setFormItemValue('trezor_address', response.address);
         setFormItemValue('trezor_publickey', response.public_key);
-        setFormItemValue('trezor_challenge_visual', response.challenge_visual);
-        setFormItemValue('trezor_challenge_hidden', response.challenge_hidden);
         setFormItemValue('trezor_signature', response.signature);
         setFormItemValue('trezor_version', response.version);
         setFormItemValue('trezor_connect_changed', 1);
@@ -53,10 +50,7 @@ function hideUnlinkPasswordField() {
 function trezorLink() {
     var data = {
         "psw": jQuery('input[name=link_password]').val(),
-        "trezor_address": jQuery('input[name=trezor_address]').val(),
         "trezor_publickey": jQuery('input[name=trezor_publickey]').val(),
-        "trezor_challenge_visual": jQuery('input[name=trezor_challenge_visual]').val(),
-        "trezor_challenge_hidden": jQuery('input[name=trezor_challenge_hidden]').val(),
         "trezor_signature": jQuery('input[name=trezor_signature]').val(),
         "trezor_version": jQuery('input[name=trezor_version]').val(),
         "trezor_connect_changed": jQuery('input[name=trezor_connect_changed]').val()

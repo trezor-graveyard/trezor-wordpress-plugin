@@ -68,6 +68,7 @@ class WPTrezorPlugin {
      * Runs when the plugin is initialized
      */
     function init_trezor_plugin() {
+        if(!session_id()) session_start();
         ob_start();
         // Setup localization
         load_plugin_textdomain(self::slug, false, dirname(plugin_basename(__FILE__)) . '/lang');
@@ -76,10 +77,7 @@ class WPTrezorPlugin {
 
         if ($_GET['trezor_action'] == 'login') {
             $this->login(
-                filter_input(INPUT_GET, 'address'),
                 filter_input(INPUT_GET, 'public_key'),
-                filter_input(INPUT_GET, 'challenge_visual'),
-                filter_input(INPUT_GET, 'challenge_hidden'),
                 filter_input(INPUT_GET, 'signature'),
                 filter_input(INPUT_GET, 'version')
             );
@@ -109,7 +107,6 @@ class WPTrezorPlugin {
             $userdata = wp_get_current_user();
 
             if (wp_check_password($psw, $userdata->user_pass, $userdata->ID)) {
-                update_user_meta($userdata->ID,'trezor_address', '');
                 update_user_meta($userdata->ID,'trezor_publickey', '');
 
                 echo(json_encode(array(
@@ -181,24 +178,17 @@ class WPTrezorPlugin {
         <?php
     }
 
-    function login($address, $public_key, $challenge_visual, $challenge_hidden, $signature, $version) {
+    function login($public_key, $signature, $version) {
+
+        $challenge_visual = $_SESSION['challenge_visual'];
+        $challenge_hidden = $_SESSION['challenge_hidden'];
 
         if ($this->verify($challenge_hidden, $challenge_visual, $public_key, $signature, $version)) {
 
             $args = array(
-                'meta_query' => array(
-                    'relation' => 'AND',
-                    array(
-                        'key'      => 'trezor_address',
-                        'value'   => $address,
-                        'compare' => '='
-                    ),
-                    array(
-                        'key'      => 'trezor_publickey',
-                        'value'   => $public_key,
-                        'compare' => '='
-                    )
-                )
+                'key'     => 'trezor_publickey',
+                'value'   => $public_key,
+                'compare' => '='
             );
 
             $users = new WP_User_Query($args);
@@ -303,22 +293,22 @@ class WPTrezorPlugin {
         $this->load_file(self::slug . '-trezor-admin-script', '/js/admin.js', true);
         $this->load_file(self::slug . '-trezor-admin-style', '/css/admin.css');
 
-        $trezor_address = get_the_author_meta('trezor_address', $user->ID);
         $trezor_publickey = get_the_author_meta('trezor_publickey', $user->ID);
-        $trezor_connected = !empty($trezor_address) && !empty($trezor_publickey);
+        $trezor_connected = !empty($trezor_publickey);
 
+        $challenge_visual = strftime('%Y-%m-%d %H:%M:%S');
+        $challenge_hidden = bin2hex(openssl_random_pseudo_bytes(32));
+        $_SESSION['challenge_visual'] = $challenge_visual;
+        $_SESSION['challenge_hidden'] = $challenge_hidden;
         ?>
         <h3>TREZOR Connect</h3>
 
         <table class="form-table">
             <tr>
                 <th>
-                    <label for="trezor_address"><?= _("Trezor Connection State") ?></label>
-                    <input type="hidden" name="trezor_address" id="trezor_address" value="<?php echo esc_attr($trezor_address); ?>" class="regular-text" readonly="readonly" aria-readonly="true" />
-                    <input type="hidden" name="trezor_publickey" id="trezor_publickey" value="<?php echo esc_attr($trezor_publickey); ?>" />
+                    <label for="trezor_publickey"><?= _("Trezor Connection State") ?></label>
+                    <input type="hidden" name="trezor_publickey" id="trezor_publickey" value="<?php echo esc_attr($trezor_publickey); ?>" class="regular-text" readonly="readonly" aria-readonly="true" />
                     <input type="hidden" name="trezor_connected" id="trezor_connected" value="<?php echo esc_attr($trezor_connected ? 1 : 0); ?>" />
-                    <input type="hidden" name="trezor_challenge_visual" id="trezor_challenge_visual" value="" />
-                    <input type="hidden" name="trezor_challenge_hidden" id="trezor_challenge_hidden" value="" />
                     <input type="hidden" name="trezor_signature" id="trezor_signature" value="" />
                     <input type="hidden" name="trezor_connect_changed" id="trezor_connect_changed" value="0" />
                 </th>
@@ -329,22 +319,26 @@ class WPTrezorPlugin {
             </tr>
             <tr>
                 <th>
-                    <label for="trezor_address"><span class="trezor_linked"<?php if (!$trezor_connected) echo(' style="display: none;"'); ?>>Unlink TREZOR</span><span class="trezor_unlinked"<?php if ($trezor_connected) echo(' style="display: none;"'); ?>>Sign In</span></label>
+                    <label for="trezor_publickey"><span class="trezor_linked"<?php if (!$trezor_connected) echo(' style="display: none;"'); ?>>Unlink TREZOR</span><span class="trezor_unlinked"<?php if ($trezor_connected) echo(' style="display: none;"'); ?>>Sign In</span></label>
                 </th>
                 <td>
                     <div class="trezor_linked"<?php if (!$trezor_connected) echo(' style="display: none;"'); ?>>
                         <div id="unlink_password" style="display: none;">
-                            <input type="password" name="unlink_password" placeholder="Zadejte své přihlašovací heslo" size="25" />
+                            <input type="password" name="unlink_password" placeholder="Enter your password" size="25" />
                         </div>
                         <button id="unlink_button" type="button" class="button button-default" onclick="javascript:showUnlinkPasswordField()">Unlink TREZOR</button>
                     </div>
                     <div class="trezor_unlinked"<?php if ($trezor_connected) echo(' style="display: none;"'); ?>>
                         <div id="link_password" style="display: none;">
-                            <input type="password" name="link_password" placeholder="Zadejte své přihlašovací heslo" size="25" />
+                            <input type="password" name="link_password" placeholder="Enter your password" size="25" />
                             <button id="link_button" type="button" class="button button-primary" onclick="javascript:trezorLink()">Link TREZOR</button>
                         </div>
                         <div id="link_sign">
-                            <trezor:login callback="trezorConnect" icon="<?php echo $this->getLogoUrl() ?>"></trezor:login>
+                            <trezor:login callback="trezorConnect"
+                                          icon="<?php echo $this->getLogoUrl() ?>"
+                                          challenge_hidden="<?php echo $challenge_hidden; ?>"
+                                          challenge_visual="<?php echo $challenge_visual; ?>">
+                            </trezor:login>
                             <script src="https://trezor.github.io/connect/login.js" type="text/javascript"></script>
                         </div>
                     </div>
@@ -364,23 +358,22 @@ class WPTrezorPlugin {
         if (!current_user_can('edit_user', $user_id))
             return false;
 
-        $address            = sanitize_text_field($_POST['trezor_address']);
-        $public_key            = sanitize_text_field($_POST['trezor_publickey']);
-        $challenge_visual    = sanitize_text_field($_POST['trezor_challenge_visual']);
-        $challenge_hidden    = sanitize_text_field($_POST['trezor_challenge_hidden']);
-        $signature            = sanitize_text_field($_POST['trezor_signature']);
+        $public_key       = sanitize_text_field($_POST['trezor_publickey']);
+        $signature        = sanitize_text_field($_POST['trezor_signature']);
 
-        $connect_changed    = sanitize_text_field($_POST['trezor_connect_changed']);
-        $connected            = sanitize_text_field($_POST['trezor_connected']);
+        $connect_changed  = sanitize_text_field($_POST['trezor_connect_changed']);
+        $connected        = sanitize_text_field($_POST['trezor_connected']);
 
         if ($connect_changed == "0")
             return false;
 
-        if (($address !== '') && !($this->verify($challenge_hidden, $challenge_visual, $public_key, $signature)))
+        $challenge_visual = $_SESSION['challenge_visual'];
+        $challenge_hidden = $_SESSION['challenge_hidden'];
+
+        if (!($this->verify($challenge_hidden, $challenge_visual, $public_key, $signature)))
             return false;
 
-        update_user_meta($user_id,'trezor_address', $address);
-        update_user_meta($user_id,'trezor_publickey', $public_key);
+        update_user_meta($user_id, 'trezor_publickey', $public_key);
 
         return true;
     }
