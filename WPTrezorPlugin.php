@@ -266,7 +266,7 @@ class WPTrezorPlugin {
         if ($version == 1) {
             $message = hex2bin($challenge_hidden) . $challenge_visual;
         } elseif ($version == 2) {
-            $message = sha256(hex2bin($challenge_hidden)) . sha256($challenge_visual);
+            $message = $this->sha256(hex2bin($challenge_hidden)) . $this->sha256($challenge_visual);
         } else {
             die('Unknown version');
         }
@@ -310,6 +310,7 @@ class WPTrezorPlugin {
                     <input type="hidden" name="trezor_publickey" id="trezor_publickey" value="<?php echo esc_attr($trezor_publickey); ?>" class="regular-text" readonly="readonly" aria-readonly="true" />
                     <input type="hidden" name="trezor_connected" id="trezor_connected" value="<?php echo esc_attr($trezor_connected ? 1 : 0); ?>" />
                     <input type="hidden" name="trezor_signature" id="trezor_signature" value="" />
+                    <input type="hidden" name="trezor_version" id="trezor_version" value="" />
                     <input type="hidden" name="trezor_connect_changed" id="trezor_connect_changed" value="0" />
                 </th>
                 <td>
@@ -363,6 +364,8 @@ class WPTrezorPlugin {
 
         $connect_changed  = sanitize_text_field($_POST['trezor_connect_changed']);
         $connected        = sanitize_text_field($_POST['trezor_connected']);
+        
+        $version          = sanitize_text_field($_POST['trezor_version']);
 
         if ($connect_changed == "0")
             return false;
@@ -370,7 +373,7 @@ class WPTrezorPlugin {
         $challenge_visual = $_SESSION['challenge_visual'];
         $challenge_hidden = $_SESSION['challenge_hidden'];
 
-        if (!($this->verify($challenge_hidden, $challenge_visual, $public_key, $signature)))
+        if (!($this->verify($challenge_hidden, $challenge_visual, $public_key, $signature, $version)))
             return false;
 
         update_user_meta($user_id, 'trezor_publickey', $public_key);
@@ -382,8 +385,11 @@ class WPTrezorPlugin {
         $this->load_file(self::slug . '-trezor-login-script', '/js/frontend.js', true);
         $this->load_file(self::slug . '-trezor-login-style',  '/css/login.css');
 
+        $challenge_visual = $_SESSION['challenge_visual'];
+        $challenge_hidden = $_SESSION['challenge_hidden'];
+
         $content = ob_get_contents();
-        $content = preg_replace('/\<\/form\>/', '<div id="wp-trezor-login"><trezor:login callback="trezorLogin" icon="'.$this->getLogoUrl().'"></trezor:login><script src="https://trezor.github.io/connect/login.js" type="text/javascript"></script></div></form>',$content);
+        $content = preg_replace('/\<\/form\>/', '<div id="wp-trezor-login"><trezor:login challenge_hidden="'.$challenge_hidden.'" challenge_visual="'.$challenge_visual.'" callback="trezorLogin" icon="'.$this->getLogoUrl().'"></trezor:login><script src="https://trezor.github.io/connect/login.js" type="text/javascript"></script></div></form>',$content);
 
         if (filter_input(INPUT_GET, 'error') == "trezor_unpaired") {
             if (!preg_match('/\<div id="login_error"\>/', $content)) {

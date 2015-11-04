@@ -11,7 +11,9 @@ function setMessage(messageClass, messageText) {
 function setFormItemValue(itemName, value) {
     var elements = document.getElementsByName(itemName);
     var e = elements[0];
-    e.setAttribute('value', value);
+    if( e != undefined ) {
+        e.setAttribute('value', value);
+    }
 }
 
 function trezorConnect(response) {
