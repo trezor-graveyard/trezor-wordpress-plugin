@@ -68,12 +68,12 @@ class WPTrezorPlugin {
      * Runs when the plugin is initialized
      */
     function init_trezor_plugin() {
-        if(!session_id()) session_start();
+        if (!session_id()) session_start();
         ob_start();
         // Setup localization
         load_plugin_textdomain(self::slug, false, dirname(plugin_basename(__FILE__)) . '/lang');
         // Load JavaScript and stylesheets
-//        $this->register_scripts_and_styles();
+        // $this->register_scripts_and_styles();
 
         if ($_GET['trezor_action'] == 'login') {
             $this->login(
@@ -108,8 +108,6 @@ class WPTrezorPlugin {
 
             if (wp_check_password($psw, $userdata->user_pass, $userdata->ID)) {
                 update_user_meta($userdata->ID,'trezor_publickey', '');
-//                delete_user_meta( $user_id, $meta_key, $meta_value );
-
                 echo(json_encode(array(
                     'result' => 'success',
                 )));
@@ -196,9 +194,8 @@ class WPTrezorPlugin {
 
             if (!empty($users->results)) {
                 $user = $users->results[0]; // first user
-                if( get_user_meta($user->ID, 'trezor_publickey', TRUE) == $public_key ) {
+                if (get_user_meta($user->ID, 'trezor_publickey', TRUE) == $public_key) {
                     wp_set_auth_cookie($user->ID);
-
                     $redirect_url = $_GET['redirect_to'];
                     if (($redirect_url != "") && ($redirect_url != "null")){
                         wp_redirect($redirect_url);
@@ -369,7 +366,7 @@ class WPTrezorPlugin {
 
         $connect_changed  = sanitize_text_field($_POST['trezor_connect_changed']);
         $connected        = sanitize_text_field($_POST['trezor_connected']);
-        
+
         $version          = sanitize_text_field($_POST['trezor_version']);
 
         if ($connect_changed == "0")
@@ -396,18 +393,11 @@ class WPTrezorPlugin {
         $content = ob_get_contents();
         $content = preg_replace('/\<\/form\>/', '<div id="wp-trezor-login"><trezor:login challenge_hidden="'.$challenge_hidden.'" challenge_visual="'.$challenge_visual.'" callback="trezorLogin" icon="'.$this->getLogoUrl().'"></trezor:login><script src="https://trezor.github.io/connect/login.js" type="text/javascript"></script></div></form>',$content);
 
-        if (filter_input(INPUT_GET, 'error') == "trezor_unpaired") {
+        if (filter_input(INPUT_GET, 'error') == "trezor_unpaired" || filter_input(INPUT_GET, 'error') == "trezor_different") {
             if (!preg_match('/\<div id="login_error"\>/', $content)) {
                 $content = preg_replace('/\<\/h1\>/', '</h1><div id="login_error"></div>',$content);
             }
-            $content = preg_replace('/\<div id="login_error"\>[^\<]*\<\/div\>/', '<div id="login_error"><strong>ERROR</strong>: TREZOR device not linked. Please login into your account and go to user profile setting to link it.<br></div>',$content);
-        }
-
-        if (filter_input(INPUT_GET, 'error') == "trezor_different") {
-            if (!preg_match('/\<div id="login_error"\>/', $content)) {
-                $content = preg_replace('/\<\/h1\>/', '</h1><div id="login_error"></div>',$content);
-            }
-            $content = preg_replace('/\<div id="login_error"\>[^\<]*\<\/div\>/', '<div id="login_error"><strong>ERROR</strong>: TREZOR device is different than linked device. Please login into your account and go to user profile setting to link it.<br></div>',$content);
+            $content = preg_replace('/\<div id="login_error"\>[^\<]*\<\/div\>/', '<div id="login_error"><strong>ERROR</strong>: TREZOR login failed. Log into your account using password and check whether you have linked the correct TREZOR device to your profile.<br></div>',$content);
         }
 
         ob_get_clean();
@@ -415,6 +405,7 @@ class WPTrezorPlugin {
     }
 
 } // end class
+
 new WPTrezorPlugin();
 
 ?>
