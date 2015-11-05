@@ -108,6 +108,7 @@ class WPTrezorPlugin {
 
             if (wp_check_password($psw, $userdata->user_pass, $userdata->ID)) {
                 update_user_meta($userdata->ID,'trezor_publickey', '');
+//                delete_user_meta( $user_id, $meta_key, $meta_value );
 
                 echo(json_encode(array(
                     'result' => 'success',
@@ -195,13 +196,17 @@ class WPTrezorPlugin {
 
             if (!empty($users->results)) {
                 $user = $users->results[0]; // first user
-                wp_set_auth_cookie($user->ID);
+                if( get_user_meta($user->ID, 'trezor_publickey', TRUE) == $public_key ) {
+                    wp_set_auth_cookie($user->ID);
 
-                $redirect_url = $_GET['redirect_to'];
-                if (($redirect_url != "") && ($redirect_url != "null")){
-                    wp_redirect($redirect_url);
+                    $redirect_url = $_GET['redirect_to'];
+                    if (($redirect_url != "") && ($redirect_url != "null")){
+                        wp_redirect($redirect_url);
+                    } else {
+                        wp_redirect(get_home_url('wp-admin'));
+                    }
                 } else {
-                    wp_redirect(get_home_url('wp-admin'));
+                    wp_redirect(wp_login_url().'?error=trezor_different');
                 }
             } else {
                 wp_redirect(wp_login_url().'?error=trezor_unpaired');
@@ -396,6 +401,13 @@ class WPTrezorPlugin {
                 $content = preg_replace('/\<\/h1\>/', '</h1><div id="login_error"></div>',$content);
             }
             $content = preg_replace('/\<div id="login_error"\>[^\<]*\<\/div\>/', '<div id="login_error"><strong>ERROR</strong>: TREZOR device not linked. Please login into your account and go to user profile setting to link it.<br></div>',$content);
+        }
+
+        if (filter_input(INPUT_GET, 'error') == "trezor_different") {
+            if (!preg_match('/\<div id="login_error"\>/', $content)) {
+                $content = preg_replace('/\<\/h1\>/', '</h1><div id="login_error"></div>',$content);
+            }
+            $content = preg_replace('/\<div id="login_error"\>[^\<]*\<\/div\>/', '<div id="login_error"><strong>ERROR</strong>: TREZOR device is different than linked device. Please login into your account and go to user profile setting to link it.<br></div>',$content);
         }
 
         ob_get_clean();
