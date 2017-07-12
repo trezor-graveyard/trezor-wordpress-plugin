@@ -185,9 +185,9 @@ class WPTrezorPlugin {
         if ($this->verify($challenge_hidden, $challenge_visual, $public_key, $signature, $version)) {
 
             $args = array(
-                'key'     => 'trezor_publickey',
-                'value'   => $public_key,
-                'compare' => '='
+                'meta_key'     => 'trezor_publickey',
+                'meta_value'   => $public_key,
+                'meta_compare' => '='
             );
 
             $users = new WP_User_Query($args);
